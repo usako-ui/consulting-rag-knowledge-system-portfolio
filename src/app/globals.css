@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  background-color: #f4f6fa;
+  color: #0f1e2e;
+  font-feature-settings: 'palt';
+}
+
+body {
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* 数値・ID の桁ズレ防止 */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* フォーカスリング（アクセシビリティ・キーボード操作） */
+:focus-visible {
+  outline: 2px solid #266eb7;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* スクロールバー（Windows デフォルトは太いため業務システム向けに絞る） */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c9d2df #f4f6fa;
+}

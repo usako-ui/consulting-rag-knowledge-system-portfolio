@@ -1,0 +1,101 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# testing
+coverage/
+
+# next.js
+.next/
+out/
+build/
+dist/
+
+# production
+*.tsbuildinfo
+next-env.d.ts
+
+# misc
+.DS_Store
+*.pem
+Thumbs.db
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# local env files（絶対にコミットしない）
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# vercel
+.vercel
+
+# 検証用文書（要件13項）
+# 原則 testdocs/ 配下はコミット対象外だが、
+# 検証スコープの受け入れ条件（毎月1日02:00 JST GitHub Actions cron 実取り込み）を GHA 上で
+# 満たすため、講座提供の非機密サンプル資料（case7-doc*.pdf）とマニフェストのみ例外的にコミットする。
+# 本番運用ではこの例外は使わず、SharePoint 月次自動同期に置き換わる（architecture.md §12 参照）。
+testdocs/*
+!testdocs/.gitkeep
+!testdocs/manifest.json
+!testdocs/manifest.json.example
+!testdocs/case7-doc*.pdf
+
+# Supabase local dev
+supabase/.branches
+supabase/.temp
+
+# IDE
+.vscode/
+.idea/
+
+# Claude Code ローカル設定（開発者ごとの権限設定・キャッシュ）
+.claude/
+
+# Claude Code 内部指示ファイル（公開リポジトリに含めない・案件5と同ポリシー）
+CLAUDE.md
+tasks.md
+agent-brief.md
+
+# 講座提供のテスト質問CSV（Day3配置予定・納品成果物ではないためリポジトリに含めない）
+tests/case7-test-questions.csv
+
+# T-27 統合テスト用チェックリスト・QAレポート（ローカル作業メモ・コミット不要）
+docs/t27-checklist.md
+docs/t27-qa-report.md
+
+# T-29 Vercel 環境変数チェックリスト（値を書かないため gitignore 必要なし・念のため除外）
+docs/vercel-env-checklist.md
+
+# 日次バックアップ（未コミット変更の退避・コミット不要）
+docs/backup-*/
+
+# デモ版参考画像（著作権・生成画像の素性不明・portfolio移設時に持ち込まない）
+demo/design-ref/
+
+# 内部設計・計画ドキュメント（ポートフォリオ・課題提出対象外）
+docs/d04-lp-demo-design.md
+docs/portfolio-publishing-policy.md
+docs/ai-handover.md
+
+# 参考デザイン画像・UI設計素材（内部用・公開不要）
+design/
+
+# 開発補助スクリプト（診断・テスト・撮影ツール・内部用）
+scripts/_*
+
+# 内部作業メモ（納品・提出対象外）
+docs/internal-scope-check.md
+docs/internal-portfolio-check.md
+
+# 講座用提出資料・記事下書き（GitHub公開対象外）
+docs/phase2-proposal.md
+docs/article-draft.md

@@ -1,0 +1,6 @@
+node_modules/
+.next/
+.env
+.env.local
+# 参考画像（著作権不明・portfolio移設時に持ち込まない）
+design-ref/

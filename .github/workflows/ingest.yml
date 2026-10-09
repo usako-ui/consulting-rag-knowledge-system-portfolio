@@ -1,0 +1,132 @@
+name: Ingest Documents
+
+# 参照：requirements.md §13（毎月1日02:00 JST 自動実行・ingestion_log 記録）
+#       architecture.md §9・§12
+#
+# 実行内容：
+#   1. Supabase 生存確認（Pause 回避、architecture.md §9）
+#   2. testdocs/*.pdf の差分を enqueue → キュー消費（Embedding 生成・DB 挿入）
+#   3. ingestion_log に success 件数が記録される
+#
+# スケジューリング：
+#   - 目標：毎月1日 02:00 JST（= 前月末日 17:00 UTC）
+#   - 前月末日は月により 28/29/30/31 と変わるため、cron 1 行では表現不可
+#   - 実装：候補日 28-31 の 17:00 UTC に発火 → 「明日が 01 日」チェックで
+#     実際に前月末日のみ処理を継続する
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 17 28-31 * *'  # UTC 候補日：28/29/30/31 の 17:00 UTC
+
+# 同一グループの実行を直列化（cancel-in-progress: false で先行ジョブを中断しない）
+concurrency:
+  group: ingest
+  cancel-in-progress: false
+
+jobs:
+  check-last-day-of-month:
+    name: Verify tomorrow is the 1st of month
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - id: check
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "manual dispatch → run"
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          TOMORROW=$(date -u -d '+1 day' +%d)
+          echo "UTC now: $(date -u), tomorrow day-of-month: $TOMORROW"
+          if [ "$TOMORROW" = "01" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "not last day of month → skip"
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  ingest:
+    needs: check-last-day-of-month
+    if: needs.check-last-day-of-month.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Keep-alive Supabase (architecture.md §9)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: npm run keep-alive
+
+      - name: Ingest testdocs/
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          LLM_PROVIDER: gemini
+          # 取り込みでは Slack トークンを使わないが env.ts の required() を通すためのダミー
+          # （実運用では Day4 で GHA Secrets に本物を登録する想定）
+          SLACK_BOT_TOKEN: unused-in-ingest
+          SLACK_SIGNING_SECRET: unused-in-ingest
+        run: npm run ingest
+
+      - name: Post-run summary
+        if: always()
+        shell: bash
+        run: |
+          echo "Ingest workflow finished at $(date -u)"
+          echo "Check job logs above for [ingest] success/failed lines and [ADMIN_NOTIFY] escalations."
+
+  # Phase 6（PM 修正指示 D）：期限切れ audit_log を削除する独立ジョブ。
+  # 取り込みが失敗しても実行する（needs 無指定・if: always()）。
+  # 要件§9「新しい定期ジョブは作らない」との整合：
+  #   既存の月次 ingest.yml に相乗りする・新規 workflow は作らない。
+  # DRY_RUN は Variables で切替（デフォルト 'true'・承認後に 'false'）。
+  audit-cleanup:
+    name: Audit log retention cleanup
+    needs: check-last-day-of-month
+    if: always() && needs.check-last-day-of-month.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cleanup expired audit_log (DRY_RUN=${{ vars.AUDIT_CLEANUP_DRY_RUN || 'true' }})
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # 承認後に Repository Variables で 'false' に切り替えて実削除を有効化する
+          DRY_RUN: ${{ vars.AUDIT_CLEANUP_DRY_RUN || 'true' }}
+        run: npm run cleanup-audit-log

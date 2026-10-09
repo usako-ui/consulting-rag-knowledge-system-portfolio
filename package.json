@@ -1,0 +1,56 @@
+{
+  "name": "consulting-rag-knowledge-system",
+  "version": "0.1.0",
+  "private": true,
+  "description": "案件7 RAGナレッジ検索 + Slackボット（コンサル会社向け社内文書検索）",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "ingest": "tsx scripts/ingest.ts",
+    "keep-alive": "tsx scripts/keep-alive.ts",
+    "setup-test-users": "tsx scripts/setup-test-users.ts",
+    "eval-recall": "tsx scripts/eval-recall.ts",
+    "test-slack-verify": "tsx scripts/test-slack-verify.ts",
+    "test-slack-handler": "tsx scripts/test-slack-handler.ts",
+    "test-audit-sanitize": "tsx scripts/test-audit-sanitize.ts",
+    "cleanup-audit-log": "tsx scripts/cleanup-audit-log.ts",
+    "test-api-access-control": "tsx scripts/test-api-access-control.ts",
+    "test-retry-api": "tsx scripts/test-retry-api.ts"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.45.4",
+    "@vercel/functions": "^3.9.11",
+    "mammoth": "^1.13.0",
+    "next": "^14.2.15",
+    "pdf-parse": "^1.1.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.11",
+    "@types/pdf-parse": "^1.1.4",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.6.1",
+    "clsx": "^2.1.1",
+    "dotenv": "^16.4.5",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.15",
+    "lucide-react": "^0.451.0",
+    "pdf-lib": "^1.17.1",
+    "postcss": "^8.5.28",
+    "server-only": "^0.0.1",
+    "tailwindcss": "^3.4.19",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": "22.x"
+  }
+}
